@@ -1,0 +1,184 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PlatformRole {
+  SUPER_ADMIN
+  SUPPORT_ADMIN
+}
+
+enum HospitalStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum ComponentType {
+  MODULE
+  SUB_MODULE
+  FEATURE
+}
+
+enum PackageAssignmentStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
+model PlatformUser {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  passwordHash String
+  role         PlatformRole
+
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  refreshTokens RefreshToken[]
+
+  @@map("platform_users")
+}
+
+model RefreshToken {
+  id String @id @default(uuid())
+
+  userId String
+  user   PlatformUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tokenHash String
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+}
+
+model Hospital {
+  id String @id @default(uuid())
+
+  name String
+  code String @unique
+
+  email String  @unique
+  phone String?
+
+  status HospitalStatus @default(ACTIVE)
+
+  createdBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments AssignedPackage[]
+
+  @@map("hospitals")
+}
+
+model SystemComponent {
+  id String @id @default(uuid())
+
+  parentId String?
+
+  parent   SystemComponent?  @relation("ComponentHierarchy", fields: [parentId], references: [id])
+  children SystemComponent[] @relation("ComponentHierarchy")
+
+  code String @unique
+  name String
+
+  type ComponentType
+
+  displayOrder Int @default(0)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  packageComponents PackageComponent[]
+
+  @@map("system_components")
+}
+
+model Package {
+  id String @id @default(uuid())
+
+  name        String  @unique
+  description String?
+
+  monthlyPrice Decimal? @db.Decimal(10, 2)
+  yearlyPrice  Decimal? @db.Decimal(10, 2)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  components  PackageComponent[]
+  limits      PackageLimit[]
+  assignments AssignedPackage[]
+
+  @@map("packages")
+}
+
+model PackageComponent {
+  id String @id @default(uuid())
+
+  packageId   String
+  componentId String
+
+  package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  component SystemComponent @relation(fields: [componentId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([packageId, componentId])
+  @@map("package_components")
+}
+
+model PackageLimit {
+  id String @id @default(uuid())
+
+  packageId String
+
+  package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  limitKey   String
+  limitValue String
+
+  createdAt DateTime @default(now())
+
+  @@unique([packageId, limitKey])
+  @@map("package_limits")
+}
+
+model AssignedPackage {
+  id String @id @default(uuid())
+
+  hospitalId String
+  packageId  String
+
+  hospital Hospital @relation(fields: [hospitalId], references: [id], onDelete: Cascade)
+
+  package Package @relation(fields: [packageId], references: [id], onDelete: Cascade)
+
+  status PackageAssignmentStatus @default(ACTIVE)
+
+  startDate DateTime
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([hospitalId])
+  @@index([packageId])
+  @@map("assigned_packages")
+}
