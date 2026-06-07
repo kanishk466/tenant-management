@@ -6,6 +6,7 @@ const prisma = require("../../config/prisma");
 const {
   generateAccessToken,
   generateRefreshToken,
+    verifyRefreshToken,
 } = require("../../utils/jwt");
 
 class AuthService {
@@ -68,6 +69,59 @@ class AuthService {
       },
     };
   }
+
+
+  async refresh(refreshToken) {
+  const payload = verifyRefreshToken(refreshToken);
+
+  const tokenHash = crypto
+    .createHash("sha256")
+    .update(refreshToken)
+    .digest("hex");
+
+  const storedToken =
+    await prisma.refreshToken.findFirst({
+      where: {
+        tokenHash,
+      },
+    });
+
+  if (!storedToken) {
+    throw new Error("Refresh token not found");
+  }
+
+  const user = await prisma.platformUser.findUnique({
+    where: {
+      id: payload.sub,
+    },
+  });
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const accessToken =
+    generateAccessToken(user);
+
+  return {
+    accessToken,
+  };
+}
+
+async logout(refreshToken) {
+  const tokenHash = crypto
+    .createHash("sha256")
+    .update(refreshToken)
+    .digest("hex");
+
+  await prisma.refreshToken.deleteMany({
+    where: {
+      tokenHash,
+    },
+  });
+
+  return true;
+}
 }
 
 module.exports = new AuthService();

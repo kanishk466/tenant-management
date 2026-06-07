@@ -1,7 +1,33 @@
+-- CreateEnum
+CREATE TYPE "PlatformRole" AS ENUM ('SUPER_ADMIN', 'SUPPORT_ADMIN');
+
+-- CreateEnum
+CREATE TYPE "HospitalStatus" AS ENUM ('ACTIVE', 'INACTIVE', 'SUSPENDED');
+
+-- CreateEnum
+CREATE TYPE "ComponentType" AS ENUM ('MODULE', 'SUB_MODULE', 'FEATURE');
+
+-- CreateEnum
+CREATE TYPE "PackageAssignmentStatus" AS ENUM ('ACTIVE', 'EXPIRED', 'CANCELLED');
+
+-- CreateTable
+CREATE TABLE "platform_users" (
+    "id" SERIAL NOT NULL,
+    "email" TEXT NOT NULL,
+    "passwordHash" TEXT NOT NULL,
+    "role" "PlatformRole" NOT NULL,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
+    "lastLoginAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "platform_users_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateTable
 CREATE TABLE "refresh_tokens" (
-    "id" TEXT NOT NULL,
-    "userId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "userId" INTEGER NOT NULL,
     "tokenHash" TEXT NOT NULL,
     "expiresAt" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -11,13 +37,13 @@ CREATE TABLE "refresh_tokens" (
 
 -- CreateTable
 CREATE TABLE "hospitals" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "phone" TEXT,
     "status" "HospitalStatus" NOT NULL DEFAULT 'ACTIVE',
-    "createdBy" TEXT,
+    "createdBy" INTEGER,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
 
@@ -26,8 +52,8 @@ CREATE TABLE "hospitals" (
 
 -- CreateTable
 CREATE TABLE "system_components" (
-    "id" TEXT NOT NULL,
-    "parentId" TEXT,
+    "id" SERIAL NOT NULL,
+    "parentId" INTEGER,
     "code" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "type" "ComponentType" NOT NULL,
@@ -41,7 +67,7 @@ CREATE TABLE "system_components" (
 
 -- CreateTable
 CREATE TABLE "packages" (
-    "id" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
     "monthlyPrice" DECIMAL(10,2),
@@ -55,9 +81,9 @@ CREATE TABLE "packages" (
 
 -- CreateTable
 CREATE TABLE "package_components" (
-    "id" TEXT NOT NULL,
-    "packageId" TEXT NOT NULL,
-    "componentId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "packageId" INTEGER NOT NULL,
+    "componentId" INTEGER NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "package_components_pkey" PRIMARY KEY ("id")
@@ -65,8 +91,8 @@ CREATE TABLE "package_components" (
 
 -- CreateTable
 CREATE TABLE "package_limits" (
-    "id" TEXT NOT NULL,
-    "packageId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "packageId" INTEGER NOT NULL,
     "limitKey" TEXT NOT NULL,
     "limitValue" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -76,9 +102,9 @@ CREATE TABLE "package_limits" (
 
 -- CreateTable
 CREATE TABLE "assigned_packages" (
-    "id" TEXT NOT NULL,
-    "hospitalId" TEXT NOT NULL,
-    "packageId" TEXT NOT NULL,
+    "id" SERIAL NOT NULL,
+    "hospitalId" INTEGER NOT NULL,
+    "packageId" INTEGER NOT NULL,
     "status" "PackageAssignmentStatus" NOT NULL DEFAULT 'ACTIVE',
     "startDate" TIMESTAMP(3) NOT NULL,
     "endDate" TIMESTAMP(3),
@@ -87,6 +113,9 @@ CREATE TABLE "assigned_packages" (
 
     CONSTRAINT "assigned_packages_pkey" PRIMARY KEY ("id")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "platform_users_email_key" ON "platform_users"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "hospitals_code_key" ON "hospitals"("code");
