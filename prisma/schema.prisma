@@ -1,8 +1,4 @@
-// =============================================================
-// HIS — Complete Prisma Schema
-// Platform layer (SuperAdmin) + Hospital layer (OPD MVP)
-// Two PostgreSQL schemas: "platform" + "hospital"
-// =============================================================
+
 
 generator client {
   provider        = "prisma-client-js"
@@ -368,11 +364,15 @@ model Doctor {
   userId           String   @unique
   user             HospitalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
   name             String
+  email            String?
+  phone            String?
   specialization   String?
   qualification    String?
   registrationNo   String?                  // MCI number
+  department       String?                  // "OPD", "Ortho"
   consultationFee  Decimal  @default(0) @db.Decimal(8, 2)
   followUpFee      Decimal  @default(0) @db.Decimal(8, 2)
+  signatureUrl     String?
   isActive         Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -401,7 +401,7 @@ model DoctorSchedule {
   maxPatients     Int      @default(20)
   isActive        Boolean  @default(true)
 
-  @@unique([doctorId, dayOfWeek])
+  @@index([doctorId, dayOfWeek])
   @@index([hospitalId, doctorId])
   @@map("doctor_schedules")
   @@schema("hospital")
