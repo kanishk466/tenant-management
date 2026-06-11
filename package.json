@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "nodemon app.js",
     "start": "node app.js",
-    "seed": "node prisma/seed.js"
+    "seed": "node prisma/seed.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "build": "npm install && npm run prisma:generate && npm run prisma:migrate"
   },
   "keywords": [],
   "author": "",
