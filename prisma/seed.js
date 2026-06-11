@@ -2,7 +2,7 @@ const bcrypt = require("bcrypt");
 const { PrismaClient, PlatformRole, ComponentType } = require("@prisma/client");
 
 const prisma = new PrismaClient();
-
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
 async function main() {
   // Super Admin
 
